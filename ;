@@ -1,0 +1,63 @@
+const express=require('express');
+const app= express();
+const port=3000;
+
+const mariadb=require('mariadb');
+const pool=mariadb.createpool({
+host:'losthost',
+user:'root',
+password:'root',
+database: 'SAMPLE',
+port:3306,
+connectionLimit:5
+});
+
+async function queryDB(query) {
+  let conn;
+  try {
+    conn = await pool.getConnection();
+    const rows = await conn.query(query);
+    return rows;
+  } catch (err) {
+    throw err;
+  } finally {
+    if (conn) conn.end();
+  }
+}
+
+// GET Request #1: Fetch all users from 'users' table
+app.get('/users', async (req, res) => {
+  try {
+    const users = await queryDB('SELECT * FROM users');
+    res.json(users);  // Send response as JSON
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET Request #2: Fetch a specific user by ID
+app.get('/users/:id', async (req, res) => {
+  const userId = req.params.id;
+  try {
+    const user = await queryDB(`SELECT * FROM users WHERE id = ${userId}`);
+    res.json(user);  // Send response as JSON
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET Request #3: Fetch all products from 'products' table
+app.get('/products', async (req, res) => {
+  try {
+    const products = await queryDB('SELECT * FROM products');
+    res.json(products);  // Send response as JSON
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Start the server on port 3000
+app.listen(3000, '0.0.0.0', () => {
+  console.log('Server is running on http://167.71.163.198:3000');
+});
+
